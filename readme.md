@@ -18,6 +18,9 @@
 - [ ] Modify umbrella (remove handle, ...)
 - [ ] Decide on third country (Austria, Iran, ?) and come up with water values and timespans for showering experience
 - [ ] Build fixture for holding shower head when not in use --> needs to hold down the switch and release it when shower head gets picked up
+- [ ] Complete breadboard prototype
+- [ ] Complete housing (pipes, shower head, base, umbrella)
+- [ ] Assemble and test
 
 ![Dry Shower Prototype](/img/breadboard-prototype.jpeg)
 ![Power For LED Strip](/img/power-for-LED-strip.jpeg)
