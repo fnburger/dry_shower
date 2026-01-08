@@ -1,4 +1,9 @@
 # TODO List (please edit)
+- [x] Write basic code
+- [x] Solder and test vibration motor
+- [x] Solder and test switch
+- [x] Find ways to power speaker and LED strip externally
+- [x] Wire and test potentiometer
 - [ ] Solder and wire LED strip
 - [ ] Write test code for LED strip
 - [ ] Drill holes for LED strip on pipes (when LED strip confirmed working)
