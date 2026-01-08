@@ -1,11 +1,27 @@
+# TODO List (please edit)
+- [ ] Solder and wire LED strip
+- [ ] Write test code for LED strip
+- [ ] Drill holes for LED strip on pipes (when LED strip confirmed working)
+- [ ] Test speaker with actual audio files (need library), may need more capable speaker
+- [ ] Test potentiometer with capacitor, then perhaps replace pot with compatible one or a turning switch? (Issue with current pot: returns 0 for almost entire range of rotation, only last small rotation segment ramps up from 0 to 4095)
+- [ ] Get and wire / solder blue LEDs for shower head
+- [ ] Drill holes for LEDs on shower head
+- [ ] Modify shower head to hold vibration motor and LEDs, fit cables through hose
+- [ ] Build holder/platform for ESP32 and main electronics inside the pipes
+- [ ] Buy spray-color (black?) for pipes, box
+- [ ] Cut hole for bottom pipe into box (base)
+- [ ] Modify umbrella (remove handle, ...)
+- [ ] Decide on third country (Austria, Iran, ?) and come up with water values and timespans for showering experience
+- [ ] Build fixture for holding shower head when not in use --> needs to hold down the switch and release it when shower head gets picked up
+
 # Overview
 The Dry Shower Project is an interactive IoT device built with an ESP32 microcontroller that simulates a "dry shower" experience. It uses vibration and sound to mimic the sensation of showering without water, inspired by varying rainfall levels in different countries. The device features a potentiometer for mode selection, a momentary toggle switch to activate the shower mode, a vibration motor for tactile feedback, and a speaker for ambient sounds.
 
 # Features
-- Mode Selection: Use a potentiometer to choose between three rainfall-inspired modes.
-- Toggle Switch Control: Momentary switch (3-position, springs back to neutral) activates the vibration motor only in the UP position.
-- Vibration Feedback: Pulsing motor simulates water flow when active.
-- Ambient Sounds:
+- Mode Selection: Use a potentiometer to choose between three rainfall-inspired modes (buggy, see TODO)
+- Toggle Switch Control: Momentary switch (3-position, springs back to neutral) activates the vibration motor only in the UP position (works)
+- Vibration Feedback: Pulsing motor simulates water flow when active (works)
+- Ambient Sounds: (may need more capable speaker, need to look into audio libraries)
     - Rain sounds (sparse droplets) when idle.
     - Shower sounds (dense water flow) when active.
 
