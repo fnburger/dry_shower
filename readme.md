@@ -14,8 +14,8 @@
 - [ ] Decide on third country (Austria, Iran, ?) and come up with water values and timespans for showering experience
 - [ ] Build fixture for holding shower head when not in use --> needs to hold down the switch and release it when shower head gets picked up
 
-![Dry Shower Prototype](/img/breadboard prototype.jpeg)
-![Power For LED Strip](/img/power for LED strip.jpeg)
+![Dry Shower Prototype](img/breadboard prototype.jpeg)
+![Power For LED Strip](img/power for LED strip.jpeg)
 
 # Overview
 The Dry Shower Project is an interactive IoT device built with an ESP32 microcontroller that simulates a "dry shower" experience. It uses vibration and sound to mimic the sensation of showering without water, inspired by varying rainfall levels in different countries. The device features a potentiometer for mode selection, a momentary toggle switch to activate the shower mode, a vibration motor for tactile feedback, and a speaker for ambient sounds.
