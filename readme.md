@@ -1,5 +1,5 @@
 # TODO List (please edit)
-- [x] Write basic code
+- [x] Write basic code and start breadboard prototype
 - [x] Solder and test vibration motor
 - [x] Solder and test switch
 - [x] Find ways to power speaker and LED strip externally
@@ -17,10 +17,13 @@
 - [ ] Cut hole for bottom pipe into box (base)
 - [ ] Modify umbrella (remove handle, ...)
 - [ ] Decide on third country (Austria, Iran, ?) and come up with water values and timespans for showering experience
-- [ ] Build fixture for holding shower head when not in use --> needs to hold down the switch and release it when shower head gets picked up
+- [ ] Build fixture for holding the shower head when not in use --> needs to hold down the switch and release it when shower head gets picked up
 - [ ] Complete breadboard prototype
 - [ ] Complete housing (pipes, shower head, base, umbrella)
 - [ ] Assemble and test
+- [ ] Create 2 minute demo video (deadline 25th Jan)
+- [ ] Create 1 A4 page scenario (deadline 25th Jan)
+- [ ] Poster (?) for presentation on 28th Jan
 
 ![Dry Shower Prototype](/img/breadboard-prototype.jpeg)
 ![Power For LED Strip](/img/power-for-LED-strip.jpeg)
