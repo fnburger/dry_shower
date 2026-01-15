@@ -21,11 +21,10 @@ const int RAIN_JAPAN = 100;
 
 // --- Variables ---
 float currentWaterLevel = 0; 
-unsigned long lastPulseTime = 0;
-bool motorState = false;
 unsigned long lastSoundNote = 0;
 int soundInterval = 100;
-bool soundIsPlaying = false; // Track if we need to shut off the speaker
+bool soundIsPlaying = false; 
+unsigned long lastDebugPrint = 0; // Timer for Serial Debug
 
 void setup() {
   Serial.begin(115200);
@@ -39,15 +38,29 @@ void setup() {
   pinMode(VIBE_PIN, OUTPUT);
   pinMode(SWITCH_PIN, INPUT_PULLUP);
 
-  Serial.println("--- DRY SHOWER: AUDIO OPTIMIZED ---");
+  Serial.println("--- DEBUG MODE: TELEPHONE SWITCH TEST ---");
 }
 
 void loop() {
   unsigned long currentMillis = millis();
-  bool isShowering = (digitalRead(SWITCH_PIN) == LOW);
+  
+  // Read Switch: LOW means Showering (Switch pressed/Head removed)
+  int rawSwitchState = digitalRead(SWITCH_PIN);
+  bool isShowering = (rawSwitchState == LOW);
 
   // ==========================================
-  // 1. WATER LEVEL LOGIC
+  // DEBUG FEEDBACK
+  // ==========================================
+  if (currentMillis - lastDebugPrint > 100) {
+    Serial.print("Switch Pin: ");
+    Serial.print(rawSwitchState == LOW ? "LOW (Active)" : "HIGH (Idle)");
+    Serial.print(" | Water: ");
+    Serial.println(currentWaterLevel);
+    lastDebugPrint = currentMillis;
+  }
+
+  // ==========================================
+  // 1. WATER LEVEL & MOTOR LOGIC
   // ==========================================
   if (!isShowering) {
     long potSum = 0;
@@ -60,37 +73,31 @@ void loop() {
     else percent = RAIN_JAPAN;
 
     currentWaterLevel = (percent * NUM_LEDS) / 100.0;
-    digitalWrite(VIBE_PIN, LOW);
+    analogWrite(VIBE_PIN, 0); 
+    
   } else {
     if (currentWaterLevel > 0) {
       currentWaterLevel -= 0.015; 
-      if (currentMillis - lastPulseTime >= 200) {
-        lastPulseTime = currentMillis;
-        motorState = !motorState;
-        digitalWrite(VIBE_PIN, motorState ? HIGH : LOW);
-      }
+      analogWrite(VIBE_PIN, 200); 
     } else {
-      digitalWrite(VIBE_PIN, LOW);
+      analogWrite(VIBE_PIN, 0); 
       currentWaterLevel = 0;
     }
   }
 
   // ==========================================
-  // 2. SOUND EFFECTS (Buzz Reduction Logic)
+  // 2. SOUND EFFECTS
   // ==========================================
   if (currentMillis - lastSoundNote > soundInterval) {
     if (isShowering && currentWaterLevel > 0) {
-      // Shower: High energy rushing
       tone(SPEAKER_PIN, random(600, 1800)); 
       soundInterval = random(20, 40);
       soundIsPlaying = true;
     } else if (isShowering && currentWaterLevel <= 0) {
-      // Empty: Warning beep
       tone(SPEAKER_PIN, 1200); 
       soundInterval = 500;
       soundIsPlaying = true;
     } else {
-      // Rain: Sparse drips
       tone(SPEAKER_PIN, random(150, 500)); 
       soundInterval = random(600, 1500);
       soundIsPlaying = true;
@@ -98,7 +105,6 @@ void loop() {
     lastSoundNote = currentMillis;
   }
 
-  // Shut off speaker pin after 15ms to stop the buzzing between notes
   if (soundIsPlaying && (currentMillis - lastSoundNote > 15)) {
     noTone(SPEAKER_PIN);
     soundIsPlaying = false;
