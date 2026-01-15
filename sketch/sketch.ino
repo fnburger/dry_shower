@@ -72,18 +72,24 @@ void loop() {
     waterLevelPercent = RAIN_JAPAN;
   }
 
-  // ==========================================
+
+// ==========================================
   // 2. LED STRIP FEEDBACK
   // ==========================================
   // Calculate how many LEDs to light
   int ledsToLight = (waterLevelPercent * NUM_LEDS) / 100;
+  
+  // FIX: Force the tank to appear 100% full if the highest country is selected
+  if (waterLevelPercent >= 95) {
+    ledsToLight = NUM_LEDS;
+  }
 
   FastLED.clear();
   for (int i = 0; i < ledsToLight; i++) {
     if (i < 3) {
-      leds[i] = CRGB::Red;  // Bottom 3 LEDs always Red
+      leds[i] = CRGB::Red;  // Bottom 3 LEDs suggest a low water alert [cite: 23, 25]
     } else {
-      leds[i] = CRGB::Blue; // Rest are Blue 
+      leds[i] = CRGB::Blue; // Blue LEDs suggest remaining water [cite: 23, 25]
     }
   }
   FastLED.show();
