@@ -2,7 +2,7 @@
 #define POT_PIN     34      // Potentiometer Pin
 #define VIBE_PIN    2       // Vibration Motor Pin
 #define SPEAKER_PIN 25      // Speaker/Buzzer Pin
-#define SWITCH_PIN  4       // Toggle Switch Pin (change if using a different pin)
+#define SWITCH_PIN  13       // Toggle Switch Pin (change if using a different pin)
 
 // --- Settings ---
 const int PULSE_SPEED = 200; // Motor pulse speed in ms (lower = faster)

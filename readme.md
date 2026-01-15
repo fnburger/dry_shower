@@ -1,3 +1,4 @@
+WARNING: GPIO PIN 4 ON THE PROVIDED ESP32 IS BROKEN
 # TODO List (please edit)
 - [x] Write basic code and start breadboard prototype
 - [x] Solder and test vibration motor
@@ -42,6 +43,6 @@ The Dry Shower Project is an interactive IoT device built with an ESP32 microcon
 # Wiring
 ESP32 Pinout:
 - Potentiometer: Wiper to GPIO34, one end to 3.3V, other to GND
-- Toggle Switch: One terminal to GPIO4, other to GND (internal pull-up enabled)
+- Toggle Switch: One terminal to GPIO13, other to GND (internal pull-up enabled)
 - Vibration Motor: To GPIO2 via transistor
 - Speaker/Buzzer: To GPIO25 (and GND)
