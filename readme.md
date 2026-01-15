@@ -5,11 +5,11 @@ WARNING: GPIO PIN 4 ON THE PROVIDED ESP32 IS BROKEN. GPIO PIN 34 IS NOT STABLE E
 - [x] Solder and test switch
 - [x] Find ways to power speaker and LED strip externally
 - [x] Wire and test potentiometer
-- [ ] Solder and wire LED strip
-- [ ] Write test code for LED strip
+- [x] Solder and wire LED strip
+- [x] Write test code for LED strip
 - [ ] Drill holes for LED strip on pipes (when LED strip confirmed working)
 - [ ] Test speaker with actual audio files (need library), may need more capable speaker
-- [ ] Test potentiometer with capacitor, then perhaps replace pot with compatible one or a turning switch? (Issue with current pot: returns 0 for almost entire range of rotation, only last small rotation segment ramps up from 0 to 4095)
+- [x] (SOLVED) Test potentiometer with capacitor, then perhaps replace pot with compatible one or a turning switch? (Issue with current pot: returns 0 for almost entire range of rotation, only last small rotation segment ramps up from 0 to 4095)
 - [ ] Get and wire / solder blue LEDs for shower head
 - [ ] Drill holes for LEDs on shower head
 - [ ] Modify shower head to hold vibration motor and LEDs, fit cables through hose
