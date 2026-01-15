@@ -1,7 +1,7 @@
 #include <FastLED.h>
 
 // --- Configuration ---
-#define POT_PIN     34      // Potentiometer Pin
+#define POT_PIN     32      // Potentiometer Pin
 #define VIBE_PIN    2       // Vibration Motor Pin 
 #define SPEAKER_PIN 25      // Speaker/Buzzer Pin 
 #define SWITCH_PIN  13      // Toggle Switch (Moved from Pin 4)

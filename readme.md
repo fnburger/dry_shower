@@ -1,4 +1,4 @@
-WARNING: GPIO PIN 4 ON THE PROVIDED ESP32 IS BROKEN
+WARNING: GPIO PIN 4 ON THE PROVIDED ESP32 IS BROKEN. GPIO PIN 34 IS NOT STABLE ENOUGH FOR POTENTIOMETER
 # TODO List (please edit)
 - [x] Write basic code and start breadboard prototype
 - [x] Solder and test vibration motor
@@ -42,7 +42,8 @@ The Dry Shower Project is an interactive IoT device built with an ESP32 microcon
 
 # Wiring
 ESP32 Pinout:
-- Potentiometer: Wiper to GPIO34, one end to 3.3V, other to GND
+- Potentiometer: Wiper to GPIO32, one end to 3.3V, other to GND
 - Toggle Switch: One terminal to GPIO13, other to GND (internal pull-up enabled)
 - Vibration Motor: To GPIO2 via transistor
 - Speaker/Buzzer: To GPIO25 (and GND)
+- LED Strip: DI to GPIO 27, CI to GPIO 14, external 5V and GND (connect GNC to ESP32 GND as well)
