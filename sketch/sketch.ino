@@ -1,10 +1,10 @@
 #include <FastLED.h>
 
 // --- Configuration ---
-#define POT_PIN     32      // Potentiometer
-#define VIBE_PIN    2       // Vibration Motor
-#define SPEAKER_PIN 25      // Speaker/Buzzer
-#define SWITCH_PIN  13      // Toggle Switch (LOW = Showering)
+#define POT_PIN     32      
+#define VIBE_PIN    2       
+#define SPEAKER_PIN 25      
+#define SWITCH_PIN  13      
 
 // LED Strip Configuration (WS2801)
 #define DATA_PIN    27      
@@ -17,7 +17,7 @@ CRGB leds[NUM_LEDS];
 // --- Settings ---
 const int RAIN_IRAN = 30;    
 const int RAIN_AUSTRIA = 65; 
-const int RAIN_JAPAN = 100; // Set to 100 to ensure all 41 LEDs light up
+const int RAIN_JAPAN = 100; 
 
 // --- Variables ---
 float currentWaterLevel = 0; 
@@ -25,7 +25,7 @@ unsigned long lastPulseTime = 0;
 bool motorState = false;
 unsigned long lastSoundNote = 0;
 int soundInterval = 100;
-unsigned long lastSerialPrint = 0;
+bool soundIsPlaying = false; // Track if we need to shut off the speaker
 
 void setup() {
   Serial.begin(115200);
@@ -39,21 +39,17 @@ void setup() {
   pinMode(VIBE_PIN, OUTPUT);
   pinMode(SWITCH_PIN, INPUT_PULLUP);
 
-  Serial.println("--- DRY SHOWER: DEPLETION SYSTEM ACTIVE ---");
+  Serial.println("--- DRY SHOWER: AUDIO OPTIMIZED ---");
 }
 
 void loop() {
   unsigned long currentMillis = millis();
-  
-  // Read Switch: LOW means Showering (Switch pressed/Head removed)
   bool isShowering = (digitalRead(SWITCH_PIN) == LOW);
 
   // ==========================================
   // 1. WATER LEVEL LOGIC
   // ==========================================
   if (!isShowering) {
-    // --- MODE: SELECTING COUNTRY ---
-    // Average Potentiometer
     long potSum = 0;
     for (int i = 0; i < 10; i++) potSum += analogRead(POT_PIN);
     int potValue = potSum / 10;
@@ -63,81 +59,62 @@ void loop() {
     else if (potValue < 2730) percent = RAIN_AUSTRIA;
     else percent = RAIN_JAPAN;
 
-    // Map percentage to number of LEDs
     currentWaterLevel = (percent * NUM_LEDS) / 100.0;
-    
-    // Safety: Turn off motor when not showering
     digitalWrite(VIBE_PIN, LOW);
-
   } else {
-    // --- MODE: SHOWERING (DEPLETION) ---
     if (currentWaterLevel > 0) {
-      // DRAIN SPEED: Increase this number to make the water run out faster
-      // 0.02 means it takes a few seconds to drain the whole strip
       currentWaterLevel -= 0.015; 
-
-      // Motor Pulsing
       if (currentMillis - lastPulseTime >= 200) {
         lastPulseTime = currentMillis;
         motorState = !motorState;
         digitalWrite(VIBE_PIN, motorState ? HIGH : LOW);
       }
     } else {
-      // Tank is Empty
       digitalWrite(VIBE_PIN, LOW);
       currentWaterLevel = 0;
     }
   }
 
   // ==========================================
-  // 2. SOUND EFFECTS
+  // 2. SOUND EFFECTS (Buzz Reduction Logic)
   // ==========================================
   if (currentMillis - lastSoundNote > soundInterval) {
     if (isShowering && currentWaterLevel > 0) {
-      tone(SPEAKER_PIN, random(800, 1600), 20); // High rush
-      soundInterval = random(20, 50);
+      // Shower: High energy rushing
+      tone(SPEAKER_PIN, random(600, 1800)); 
+      soundInterval = random(20, 40);
+      soundIsPlaying = true;
     } else if (isShowering && currentWaterLevel <= 0) {
-      tone(SPEAKER_PIN, 200, 100); // Low "Empty" hum
+      // Empty: Warning beep
+      tone(SPEAKER_PIN, 1200); 
       soundInterval = 500;
+      soundIsPlaying = true;
     } else {
-      tone(SPEAKER_PIN, random(100, 400), 40); // Ambient rain
-      soundInterval = random(500, 1500);
+      // Rain: Sparse drips
+      tone(SPEAKER_PIN, random(150, 500)); 
+      soundInterval = random(600, 1500);
+      soundIsPlaying = true;
     }
     lastSoundNote = currentMillis;
+  }
+
+  // Shut off speaker pin after 15ms to stop the buzzing between notes
+  if (soundIsPlaying && (currentMillis - lastSoundNote > 15)) {
+    noTone(SPEAKER_PIN);
+    soundIsPlaying = false;
   }
 
   // ==========================================
   // 3. LED STRIP DISPLAY
   // ==========================================
   FastLED.clear();
-  
-  // We use (int) to truncate the float so LEDs turn off one by one
   int ledsToDisplay = (int)currentWaterLevel;
-
   for (int i = 0; i < ledsToDisplay; i++) {
-    if (i < 3) {
-      leds[i] = CRGB::Red;  // Bottom 3 Red
-    } else {
-      leds[i] = CRGB::Blue; // Rest Blue
-    }
+    if (i < 3) leds[i] = CRGB::Red;
+    else leds[i] = CRGB::Blue;
   }
-
-  // Visual "Empty" Alert: Flash the Red LEDs if showering with no water
   if (isShowering && ledsToDisplay == 0) {
-    if ((currentMillis / 250) % 2 == 0) {
-       leds[0] = CRGB::Red; leds[1] = CRGB::Red; leds[2] = CRGB::Red;
-    }
+    if ((currentMillis / 250) % 2 == 0) fill_solid(leds, 3, CRGB::Red);
   }
-
   FastLED.show();
-
-  // ==========================================
-  // 4. SERIAL DEBUG
-  // ==========================================
-  if (currentMillis - lastSerialPrint > 500) {
-    Serial.print("Mode: "); Serial.print(isShowering ? "SHOWERING " : "SELECTING ");
-    Serial.print("| Water: "); Serial.print(currentWaterLevel);
-    Serial.println();
-    lastSerialPrint = currentMillis;
-  }
 }
