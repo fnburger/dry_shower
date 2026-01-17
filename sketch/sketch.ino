@@ -17,6 +17,7 @@ CRGB leds[NUM_LEDS];
 const int RAIN_IRAN = 30;    
 const int RAIN_AUSTRIA = 65; 
 const int RAIN_JAPAN = 100; 
+const float DRAIN_SPEED = 0.015;
 
 // --- Variables ---
 float currentWaterLevel = 0; 
@@ -65,7 +66,7 @@ void loop() {
     // --- MODE: DEPLETING ---
     dripPosition = -1; 
     if (currentWaterLevel > 0) {
-      currentWaterLevel -= 0.015; // Drain speed
+      currentWaterLevel -= DRAIN_SPEED; // Drain water
       analogWrite(VIBE_PIN, 200); // Buzzing motor
     } else {
       analogWrite(VIBE_PIN, 0); 
