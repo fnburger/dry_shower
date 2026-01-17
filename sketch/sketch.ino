@@ -17,7 +17,7 @@ CRGB leds[NUM_LEDS];
 const int RAIN_IRAN = 30;    
 const int RAIN_AUSTRIA = 65; 
 const int RAIN_TAIWAN = 100; 
-const float DRAIN_SPEED = 0.015;
+const float DRAIN_SPEED = 0.01;
 
 // --- Variables ---
 float currentWaterLevel = 0; 
