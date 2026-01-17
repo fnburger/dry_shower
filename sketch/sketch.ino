@@ -102,6 +102,11 @@ void loop() {
     lastDripMove = currentMillis;
     dripPosition -= 1.0; 
     if (dripPosition <= currentWaterLevel) {
+      // SYNCED SOUND: Play tinkle only when LED hits the water surface
+      tone(SPEAKER_PIN, random(1200, 1800), 15);
+      soundIsPlaying = true;
+      lastSoundNote = currentMillis;
+
       dripPosition = (currentWaterLevel < targetLevel) ? NUM_LEDS - 1 : -1;
     }
   }
@@ -113,15 +118,20 @@ void loop() {
     if (isShowering && currentWaterLevel > 0) {
       tone(SPEAKER_PIN, random(600, 1800)); 
       soundInterval = random(20, 40);
-    } else if (!isShowering && currentWaterLevel < targetLevel) {
-      tone(SPEAKER_PIN, random(1200, 1800)); // Refill tinkle
-      soundInterval = 250; 
-    } else {
-      tone(SPEAKER_PIN, random(150, 500)); // Ambient rain
+      soundIsPlaying = true;
+      lastSoundNote = currentMillis;
+    } else if (isShowering && currentWaterLevel <= 0) {
+      tone(SPEAKER_PIN, 1200); // Tank empty beep
+      soundInterval = 500;
+      soundIsPlaying = true;
+      lastSoundNote = currentMillis;
+    } else if (!isShowering && dripPosition < 0) {
+      // Ambient rain only when NOT refilling (refill sound handled by drip move)
+      tone(SPEAKER_PIN, random(150, 500)); 
       soundInterval = random(800, 2000);
+      soundIsPlaying = true;
+      lastSoundNote = currentMillis;
     }
-    soundIsPlaying = true;
-    lastSoundNote = currentMillis;
   }
 
   if (soundIsPlaying && (currentMillis - lastSoundNote > 15)) {
