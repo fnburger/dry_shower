@@ -12,6 +12,7 @@ WARNING: GPIO PIN 4 ON THE PROVIDED ESP32 IS BROKEN. GPIO PIN 34 IS NOT STABLE E
 - [x] (SOLVED) Test potentiometer with capacitor, then perhaps replace pot with compatible one or a turning switch? (Issue with current pot: returns 0 for almost entire range of rotation, only last small rotation segment ramps up from 0 to 4095)
 - [x] Get and wire / solder blue LEDs for shower head
 - [ ] Drill holes for LEDs on shower head or 3D print cover
+- [ ] 3D print knob for potentiometer
 - [x] Modify shower head to hold vibration motor and LEDs, fit cables through hose
 - [ ] Build holder/platform for ESP32 and main electronics inside the pipes
 - [ ] Buy spray-color (black?) for pipes, box
@@ -22,6 +23,7 @@ WARNING: GPIO PIN 4 ON THE PROVIDED ESP32 IS BROKEN. GPIO PIN 34 IS NOT STABLE E
 - [x] Complete breadboard prototype
 - [ ] Complete housing (pipes, shower head, base, umbrella)
 - [ ] Assemble and test
+- [ ] Draw country indicator for pot onto pipe
 - [ ] Create 2 minute demo video (deadline 25th Jan)
 - [ ] Create 1 A4 page scenario (deadline 25th Jan)
 - [ ] Poster for presentation on 28th Jan
