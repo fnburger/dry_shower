@@ -11,15 +11,16 @@ WARNING: GPIO PIN 4 ON THE PROVIDED ESP32 IS BROKEN. GPIO PIN 34 IS NOT STABLE E
 - [ ] Test speaker with actual audio files (need library), may need more capable speaker / louder speaker
 - [x] (SOLVED) Test potentiometer with capacitor, then perhaps replace pot with compatible one or a turning switch? (Issue with current pot: returns 0 for almost entire range of rotation, only last small rotation segment ramps up from 0 to 4095)
 - [x] Get and wire / solder blue LEDs for shower head
-- [ ] Drill holes for LEDs on shower head or 3D print cover
-- [ ] 3D print knob for potentiometer
+- [ ] Melt a hole in the pipe for the 4 wires going to the shower head
+- [ ] 3D print a cover with 1 hole to put onto the shower head
+- [ ] 3D print a knob for potentiometer
 - [x] Modify shower head to hold vibration motor and LEDs, fit cables through hose
-- [ ] Build holder/platform for ESP32 and main electronics inside the pipes
-- [ ] Buy spray-color (black?) for pipes, box
+- [ ] Buy spray-color (black) for pipes, box
 - [x] Cut hole for bottom pipe into box (base)
-- [ ] Modify umbrella (remove handle, ...)
-- [ ] Decide on third country (Austria, Iran, ?) and come up with water values and timespans for showering experience
-- [ ] Build fixture for holding the shower head when not in use --> needs to hold down the switch and release it when shower head gets picked up
+- [ ] Modify umbrella (remove handle or inverse bend)
+- [ ] Come up with water values and timespans for showering experience
+- [ ] Melt a hole in the pipe for the 2 wires going to the switch (hide this hole behind the holder)
+- [ ] 3D print, build and glue a holder for the shower head when it's not in use --> needs to hold down the switch and release it when shower head gets picked up
 - [x] Complete breadboard prototype
 - [ ] Complete housing (pipes, shower head, base, umbrella)
 - [ ] Assemble and test
