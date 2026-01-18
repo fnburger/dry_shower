@@ -41,7 +41,7 @@ The Dry Shower Project is an interactive exhibition device built with an ESP32 m
 - LED on the shower head (needs to be assembled and tested)
 - Toggle Switch Control: Switch (springs back to neutral) activates the vibration motor only in the UP position (works)
 - Vibration Feedback: Pulsing motor simulates water flow when active (works)
-- Ambient Sounds: (may need more capable speaker, need to look into audio libraries or replace this with mechanical sounds)
+- Ambient Sounds: (may need more capable/louder speaker, or enhance this with mechanical sounds)
     - Rain sounds (sparse droplets) when idle.
     - Shower sounds (dense water flow) when active.
 
