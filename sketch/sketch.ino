@@ -1,9 +1,10 @@
 #include <FastLED.h>
+#include <DFRobotDFPlayerMini.h>
+#include <HardwareSerial.h>
 
 // --- Configuration ---
 #define POT_PIN     32      
 #define VIBE_PIN    2       
-#define SPEAKER_PIN 25      
 #define SWITCH_PIN  13      
 
 #define DATA_PIN    27      
@@ -11,6 +12,14 @@
 #define NUM_LEDS    41      
 #define BRIGHTNESS  120     
 
+// DFPlayer uses UART2: RX (GPIO 16), TX (GPIO 17) is standard for ESP32 UART2
+// Note: You used RX 3, TX 1 which are the Main Serial pins. 
+// It is better to use 16 and 17 to keep your Serial Monitor free.
+#define RX_PIN      16 
+#define TX_PIN      17 
+
+HardwareSerial dfSerial(2); 
+DFRobotDFPlayerMini df;
 CRGB leds[NUM_LEDS];
 
 // --- Settings ---
@@ -21,15 +30,14 @@ const float DRAIN_SPEED = 0.01;
 
 // --- Variables ---
 float currentWaterLevel = 0; 
-int lastTargetLevel = 0;      // Track pot changes
-unsigned long lastSoundNote = 0;
-int soundInterval = 100;
-bool soundIsPlaying = false; 
-
-// Drip Animation Variables
+int lastTargetLevel = 0;      
 float dripPosition = -1;      
 unsigned long lastDripMove = 0; 
-const int DRIP_SPEED = 30;     
+const int DRIP_SPEED = 30; 
+
+// Audio State Tracking
+enum SoundState { SILENT, RAIN, SHOWER, EMPTY };
+SoundState currentSound = SILENT;
 
 void setup() {
   Serial.begin(115200);
@@ -37,6 +45,16 @@ void setup() {
   FastLED.setBrightness(BRIGHTNESS);
   FastLED.clear();
   FastLED.show();
+
+  // DFPlayer Init
+  dfSerial.begin(9600, SERIAL_8N1, RX_PIN, TX_PIN);
+  delay(1000); 
+  if (!df.begin(dfSerial)) {
+    Serial.println("DFPlayer FAILED. Check wiring RX/TX and SD card.");
+  } else {
+    Serial.println("DFPlayer OK");
+    df.volume(25); // 0-30
+  }
 
   pinMode(POT_PIN, INPUT);
   pinMode(VIBE_PIN, OUTPUT);
@@ -52,95 +70,70 @@ void loop() {
   for (int i = 0; i < 10; i++) potSum += analogRead(POT_PIN);
   int potValue = potSum / 10;
 
-  int percent = 0;
-  if (potValue < 1365) percent = RAIN_IRAN;
-  else if (potValue < 2730) percent = RAIN_AUSTRIA;
-  else percent = RAIN_TAIWAN;
-
+  int percent = (potValue < 1365) ? RAIN_IRAN : (potValue < 2730) ? RAIN_AUSTRIA : RAIN_TAIWAN;
   float targetLevel = (percent * NUM_LEDS) / 100.0;
 
   // ==========================================
-  // 1. WATER LEVEL & MOTOR LOGIC
+  // 1. WATER LEVEL & MOTOR & AUDIO STATE
   // ==========================================
   if (isShowering) {
-    // --- MODE: DEPLETING ---
     dripPosition = -1; 
     if (currentWaterLevel > 0) {
-      currentWaterLevel -= DRAIN_SPEED; // Drain water
-      analogWrite(VIBE_PIN, 200); // Buzzing motor
+      currentWaterLevel -= DRAIN_SPEED;
+      analogWrite(VIBE_PIN, 200);
+      
+      if (currentSound != SHOWER) {
+        df.loop(2); // Play 0002.mp3 (Shower) in a loop
+        currentSound = SHOWER;
+      }
     } else {
       analogWrite(VIBE_PIN, 0); 
       currentWaterLevel = 0;
+      
+      if (currentSound != EMPTY) {
+        df.play(3); // Play 0003.mp3 (Empty Warning)
+        currentSound = EMPTY;
+      }
     }
   } 
   else {
-    // --- MODE: IDLE / REFILL ---
     analogWrite(VIBE_PIN, 0); 
 
-    // BUG FIX: If the user turns the POT, jump instantly to that level
+    if (currentSound != RAIN) {
+      df.loop(1); // Play 0001.mp3 (Ambient Rain) in a loop
+      currentSound = RAIN;
+    }
+
     if ((int)targetLevel != lastTargetLevel) {
       currentWaterLevel = targetLevel; 
       lastTargetLevel = (int)targetLevel;
-      dripPosition = -1; // Stop drip if we manually changed countries
-    } 
-    // Otherwise, if we just finished a shower, refill slowly
-    else if (currentWaterLevel < targetLevel) {
-      currentWaterLevel += 0.005; // Refill rate
-      
-      // Start drip animation during slow refill
+      dripPosition = -1;
+    } else if (currentWaterLevel < targetLevel) {
+      currentWaterLevel += 0.005; 
       if (dripPosition < 0) dripPosition = NUM_LEDS - 1;
-    } 
-    else {
-      dripPosition = -1; // Fully charged
+    } else {
+      dripPosition = -1; 
     }
   }
 
   // ==========================================
-  // 2. DRIP MOVEMENT
+  // 2. DRIP MOVEMENT & IMPACT SOUND
   // ==========================================
   if (dripPosition >= 0 && currentMillis - lastDripMove > DRIP_SPEED) {
     lastDripMove = currentMillis;
     dripPosition -= 1.0; 
     if (dripPosition <= currentWaterLevel) {
-      // SYNCED SOUND: Play tinkle only when LED hits the water surface
-      tone(SPEAKER_PIN, random(1200, 1800), 15);
-      soundIsPlaying = true;
-      lastSoundNote = currentMillis;
-
+      // Impact Sound: We use play() for a one-shot sound
+      // This will briefly interrupt the loop(1), but most DFPlayers 
+      // handle this one-shot overlay well.
+      df.play(4); 
+      
       dripPosition = (currentWaterLevel < targetLevel) ? NUM_LEDS - 1 : -1;
     }
   }
 
   // ==========================================
-  // 3. SOUND EFFECTS
-  // ==========================================
-  if (currentMillis - lastSoundNote > soundInterval) {
-    if (isShowering && currentWaterLevel > 0) {
-      tone(SPEAKER_PIN, random(600, 1800)); 
-      soundInterval = random(20, 40);
-      soundIsPlaying = true;
-      lastSoundNote = currentMillis;
-    } else if (isShowering && currentWaterLevel <= 0) {
-      tone(SPEAKER_PIN, 1200); // Tank empty beep
-      soundInterval = 500;
-      soundIsPlaying = true;
-      lastSoundNote = currentMillis;
-    } else if (!isShowering && dripPosition < 0) {
-      // Ambient rain only when NOT refilling (refill sound handled by drip move)
-      tone(SPEAKER_PIN, random(150, 500)); 
-      soundInterval = random(800, 2000);
-      soundIsPlaying = true;
-      lastSoundNote = currentMillis;
-    }
-  }
-
-  if (soundIsPlaying && (currentMillis - lastSoundNote > 15)) {
-    noTone(SPEAKER_PIN);
-    soundIsPlaying = false;
-  }
-
-  // ==========================================
-  // 4. LED STRIP DISPLAY
+  // 3. LED STRIP DISPLAY
   // ==========================================
   FastLED.clear();
   int ledsToDisplay = (int)currentWaterLevel;
