@@ -13,8 +13,6 @@
 #define BRIGHTNESS  120     
 
 // DFPlayer uses UART2: RX (GPIO 16), TX (GPIO 17) is standard for ESP32 UART2
-// Note: You used RX 3, TX 1 which are the Main Serial pins. 
-// It is better to use 16 and 17 to keep your Serial Monitor free.
 #define RX_PIN      16 
 #define TX_PIN      17 
 
@@ -124,8 +122,7 @@ void loop() {
     dripPosition -= 1.0; 
     if (dripPosition <= currentWaterLevel) {
       // Impact Sound: We use play() for a one-shot sound
-      // This will briefly interrupt the loop(1), but most DFPlayers 
-      // handle this one-shot overlay well.
+      // This will briefly interrupt the loop(1)
       df.play(4); 
       
       dripPosition = (currentWaterLevel < targetLevel) ? NUM_LEDS - 1 : -1;
