@@ -91,6 +91,11 @@ void loop() {
       analogWrite(VIBE_PIN, 0); 
       currentWaterLevel = 0;
       
+      // FIX: Stop the shower sound when water is empty
+      if (currentSound != EMPTY) {
+        df.stop(); 
+        currentSound = EMPTY;
+      }
       // Removed Warning Sound (df.play(3))
     }
   } 
