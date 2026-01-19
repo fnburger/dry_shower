@@ -36,6 +36,7 @@ const int DRIP_SPEED = 30;
 // Audio State Tracking
 enum SoundState { SILENT, RAIN, SHOWER, EMPTY };
 SoundState currentSound = SILENT;
+bool isRefilling = false; 
 
 void setup() {
   Serial.begin(115200);
@@ -48,10 +49,10 @@ void setup() {
   dfSerial.begin(9600, SERIAL_8N1, RX_PIN, TX_PIN);
   delay(1000); 
   if (!df.begin(dfSerial)) {
-    Serial.println("DFPlayer FAILED. Check wiring RX/TX and SD card.");
+    Serial.println("DFPlayer FAILED.");
   } else {
     Serial.println("DFPlayer OK");
-    df.volume(25); // 0-30
+    df.volume(30); 
   }
 
   pinMode(POT_PIN, INPUT);
@@ -63,7 +64,6 @@ void loop() {
   unsigned long currentMillis = millis();
   bool isShowering = (digitalRead(SWITCH_PIN) == LOW);
 
-  // 1. Calculate Target from Potentiometer
   long potSum = 0;
   for (int i = 0; i < 10; i++) potSum += analogRead(POT_PIN);
   int potValue = potSum / 10;
@@ -76,56 +76,68 @@ void loop() {
   // ==========================================
   if (isShowering) {
     dripPosition = -1; 
+    isRefilling = false;
+
     if (currentWaterLevel > 0) {
       currentWaterLevel -= DRAIN_SPEED;
       analogWrite(VIBE_PIN, 200);
       
       if (currentSound != SHOWER) {
-        df.loop(2); // Play 0002.mp3 (Shower) in a loop
+        df.loop(2); // Play 0002.mp3 (Shower)
         currentSound = SHOWER;
       }
     } else {
+      // Tank is empty while shower is still held
       analogWrite(VIBE_PIN, 0); 
       currentWaterLevel = 0;
       
-      if (currentSound != EMPTY) {
-        df.play(3); // Play 0003.mp3 (Empty Warning)
-        currentSound = EMPTY;
-      }
+      // Removed Warning Sound (df.play(3))
     }
   } 
   else {
     analogWrite(VIBE_PIN, 0); 
 
-    if (currentSound != RAIN) {
-      df.loop(1); // Play 0001.mp3 (Ambient Rain) in a loop
-      currentSound = RAIN;
-    }
-
+    // Handle instant country change via Pot
     if ((int)targetLevel != lastTargetLevel) {
       currentWaterLevel = targetLevel; 
       lastTargetLevel = (int)targetLevel;
       dripPosition = -1;
-    } else if (currentWaterLevel < targetLevel) {
+      isRefilling = false;
+    } 
+    // Handle slow refill
+    else if (currentWaterLevel < targetLevel) {
       currentWaterLevel += 0.005; 
+      isRefilling = true;
       if (dripPosition < 0) dripPosition = NUM_LEDS - 1;
-    } else {
+    } 
+    else {
       dripPosition = -1; 
+      isRefilling = false;
+    }
+
+    // Audio Logic for Idle/Rain mode
+    // Now plays rain sound even during refill because impact sounds are off
+    if (currentSound != RAIN) {
+      df.loop(1); // Play 0001.mp3 (Rain)
+      currentSound = RAIN;
     }
   }
 
   // ==========================================
-  // 2. DRIP MOVEMENT & IMPACT SOUND
+  // 2. DRIP MOVEMENT
   // ==========================================
   if (dripPosition >= 0 && currentMillis - lastDripMove > DRIP_SPEED) {
     lastDripMove = currentMillis;
     dripPosition -= 1.0; 
     if (dripPosition <= currentWaterLevel) {
-      // Impact Sound: We use play() for a one-shot sound
-      // This will briefly interrupt the loop(1)
-      df.play(4); 
+      // Impact sound commented
+      // df.play(4); 
       
-      dripPosition = (currentWaterLevel < targetLevel) ? NUM_LEDS - 1 : -1;
+      if (currentWaterLevel < targetLevel) {
+        dripPosition = NUM_LEDS - 1;
+      } else {
+        dripPosition = -1;
+      }
     }
   }
 

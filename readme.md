@@ -8,7 +8,7 @@ WARNING: GPIO PIN 4 ON THE PROVIDED ESP32 IS BROKEN. GPIO PIN 34 IS NOT STABLE E
 - [x] Solder and wire LED strip
 - [x] Write test code for LED strip
 - [x] Drill holes for LED strip on pipes (when LED strip confirmed working)
-- [ ] Test speaker with actual audio files (need library), may need more capable speaker / louder speaker
+- [x] Test speaker with actual audio files (need library), may need more capable speaker / louder speaker
 - [x] (SOLVED) Test potentiometer with capacitor, then perhaps replace pot with compatible one or a turning switch? (Issue with current pot: returns 0 for almost entire range of rotation, only last small rotation segment ramps up from 0 to 4095)
 - [x] Get and wire / solder blue LEDs for shower head
 - [ ] Melt a hole in the pipe for the 4 wires going to the shower head
@@ -41,15 +41,17 @@ The Dry Shower Project is an interactive exhibition device built with an ESP32 m
 - LED on the shower head (needs to be assembled and tested)
 - Toggle Switch Control: Switch (springs back to neutral) activates the vibration motor only in the UP position (works)
 - Vibration Feedback: Pulsing motor simulates water flow when active (works)
-- Ambient Sounds: (may need more capable/louder speaker, or enhance this with mechanical sounds)
-    - Rain sounds (sparse droplets) when idle.
-    - Shower sounds (dense water flow) when active.
+- Ambient Sounds:
+    - Rain sounds when idle.
+    - Shower sounds when active.
+    - Dripping water sound when refilling tank.
+    - Warning sound when water tank is empty.
 
 # Wiring
 ESP32 Pinout:
 - Potentiometer: Wiper to GPIO32, one end to 3.3V, other to GND
 - Toggle Switch: One terminal to GPIO13, other to GND (internal pull-up enabled)
 - Vibration Motor: To GPIO2 via transistor
-- Speaker/Buzzer: To GPIO25 (and GND), external 5V power supply
+- Speaker: To GPIO16 and GPIO17 (and GND), external 5V power supply
 - LED Strip: DI to GPIO 27, CI to GPIO 14, external 5V and GND (connect external GND to ESP32 GND as well)
 - LED (Shower head): tbd
