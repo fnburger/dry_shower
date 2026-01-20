@@ -48,7 +48,7 @@ void setup() {
 
   // DFPlayer Init
   dfSerial.begin(9600, SERIAL_8N1, RX_PIN, TX_PIN);
-  delay(1000); 
+  delay(5000); 
   if (!df.begin(dfSerial)) {
     Serial.println("DFPlayer FAILED.");
   } else {
