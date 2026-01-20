@@ -12,19 +12,19 @@ WARNING: GPIO PIN 4 ON THE PROVIDED ESP32 IS BROKEN. GPIO PIN 34 IS NOT STABLE E
 - [x] (SOLVED) Test potentiometer with capacitor, then perhaps replace pot with compatible one or a turning switch? (Issue with current pot: returns 0 for almost entire range of rotation, only last small rotation segment ramps up from 0 to 4095)
 - [x] Get and wire / solder blue LEDs for shower head
 - [ ] Melt a hole in the pipe for the 4 wires going to the shower head
-- [ ] 3D print a cover with 1 hole to put onto the shower head
+- [ ] 3D print a cover to put onto the shower head
 - [ ] 3D print a knob for potentiometer
 - [x] Modify shower head to hold vibration motor and LEDs, fit cables through hose
 - [ ] Buy spray-color (black) for pipes, box
 - [x] Cut hole for bottom pipe into box (base)
 - [ ] Modify umbrella (remove handle or inverse bend)
-- [ ] Come up with water values and timespans for showering experience
+- [ ] Come up with water values and timespans for showering experience. Should use real data in some way. Communicate this on the poster.
 - [ ] Melt a hole in the pipe for the 2 wires going to the switch (hide this hole behind the holder)
 - [ ] 3D print, build and glue a holder for the shower head when it's not in use --> needs to hold down the switch and release it when shower head gets picked up
 - [x] Complete breadboard prototype
 - [ ] Complete housing (pipes, shower head, base, umbrella)
-- [ ] Assemble and test
-- [ ] Draw country indicator for pot onto pipe
+- [ ] Assemble and test functionality and stability
+- [ ] Draw country indicator for pot onto pipe and indicator on the knob
 - [ ] Create 2 minute demo video (deadline 25th Jan)
 - [ ] Create 1 A4 page scenario (deadline 25th Jan)
 - [ ] Poster for presentation on 28th Jan
@@ -44,8 +44,8 @@ The Dry Shower Project is an interactive exhibition device built with an ESP32 m
 - Ambient Sounds:
     - Rain sounds when idle.
     - Shower sounds when active.
-    - Dripping water sound when refilling tank.
-    - Warning sound when water tank is empty.
+    - (REMOVED) Dripping water sound when refilling tank.
+    - (REMOVED) Warning sound when water tank is empty.
 
 # Wiring
 ESP32 Pinout:
