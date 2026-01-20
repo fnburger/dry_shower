@@ -3,18 +3,18 @@
 #include <HardwareSerial.h>
 
 // --- Configuration ---
-#define POT_PIN     32      
-#define VIBE_PIN    2       
-#define SWITCH_PIN  13      
+#define POT_PIN      32      
+#define VIBE_PIN     2       
+#define SWITCH_PIN   13      
 
-#define DATA_PIN    27      
-#define CLOCK_PIN   14      
-#define NUM_LEDS    41      
-#define BRIGHTNESS  120     
+#define DATA_PIN     27      
+#define CLOCK_PIN    14      
+#define NUM_LEDS     41      
+#define BRIGHTNESS   120     
 
 // DFPlayer uses UART2: RX (GPIO 16), TX (GPIO 17) is standard for ESP32 UART2
-#define RX_PIN      16 
-#define TX_PIN      17 
+#define RX_PIN       16 
+#define TX_PIN       17 
 
 HardwareSerial dfSerial(2); 
 DFRobotDFPlayerMini df;
@@ -25,6 +25,7 @@ const int RAIN_IRAN = 30;
 const int RAIN_AUSTRIA = 65; 
 const int RAIN_TAIWAN = 100; 
 const float DRAIN_SPEED = 0.005;
+const float TRANSITION_SPEED = 0.5; // High speed for knob turns (Adjust this for snappiness)
 
 // --- Variables ---
 float currentWaterLevel = 0; 
@@ -101,11 +102,24 @@ void loop() {
   else {
     analogWrite(VIBE_PIN, 0); 
 
-    // Handle instant country change via Pot
+    // Handle Country Change (SMOOTH TRANSITION ANIMATION)
     if ((int)targetLevel != lastTargetLevel) {
-      currentWaterLevel = targetLevel; 
-      lastTargetLevel = (int)targetLevel;
-      dripPosition = -1;
+      
+      if (currentWaterLevel < targetLevel) {
+        currentWaterLevel += TRANSITION_SPEED;
+        if (currentWaterLevel > targetLevel) currentWaterLevel = targetLevel;
+      } else {
+        currentWaterLevel -= TRANSITION_SPEED;
+        if (currentWaterLevel < targetLevel) currentWaterLevel = targetLevel;
+      }
+
+      // If we are very close to the target, lock it in and update lastTargetLevel
+      if (abs(currentWaterLevel - targetLevel) < 0.1) {
+          currentWaterLevel = targetLevel;
+          lastTargetLevel = (int)targetLevel;
+      }
+      
+      dripPosition = -1; // No dripping while the tank is "moving"
       isRefilling = false;
     } 
     // Handle slow refill
@@ -153,6 +167,12 @@ void loop() {
     if (i < 3) leds[i] = CRGB::Red;
     else leds[i] = CRGB::Blue;
   }
+
+  // Visual "Surface" effect during country changes
+  if ((int)targetLevel != lastTargetLevel && ledsToDisplay > 0 && ledsToDisplay <= NUM_LEDS) {
+      leds[ledsToDisplay - 1] = CRGB::White; // Bright surface line
+  }
+
   if (dripPosition >= 0) leds[(int)dripPosition] = CRGB::Cyan;
   if (isShowering && ledsToDisplay == 0) {
     if ((currentMillis / 250) % 2 == 0) fill_solid(leds, 3, CRGB::Red);
