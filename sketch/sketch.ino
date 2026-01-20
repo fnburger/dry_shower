@@ -24,7 +24,7 @@ CRGB leds[NUM_LEDS];
 const int RAIN_IRAN = 30;    
 const int RAIN_AUSTRIA = 65; 
 const int RAIN_TAIWAN = 100; 
-const float DRAIN_SPEED = 0.01;
+const float DRAIN_SPEED = 0.005;
 
 // --- Variables ---
 float currentWaterLevel = 0; 
@@ -91,9 +91,8 @@ void loop() {
       analogWrite(VIBE_PIN, 0); 
       currentWaterLevel = 0;
       
-      // FIX: Stop the shower sound when water is empty
       if (currentSound != EMPTY) {
-        df.stop(); 
+        df.stop();  // Stop the shower sound when water is empty
         currentSound = EMPTY;
       }
       // Removed Warning Sound (df.play(3))
@@ -121,7 +120,6 @@ void loop() {
     }
 
     // Audio Logic for Idle/Rain mode
-    // Now plays rain sound even during refill because impact sounds are off
     if (currentSound != RAIN) {
       df.loop(1); // Play 0001.mp3 (Rain)
       currentSound = RAIN;
