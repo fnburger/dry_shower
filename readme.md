@@ -11,6 +11,7 @@ WARNING: GPIO PIN 4 ON THE PROVIDED ESP32 IS BROKEN. GPIO PIN 34 IS NOT STABLE E
 - [x] Test speaker with actual audio files (need library), may need more capable speaker / louder speaker
 - [x] (SOLVED) Test potentiometer with capacitor, then perhaps replace pot with compatible one or a turning switch? (Issue with current pot: returns 0 for almost entire range of rotation, only last small rotation segment ramps up from 0 to 4095)
 - [x] Get and wire / solder blue LEDs for shower head
+- [ ] Use smaller second speaker for SFX like country select, empty tank, maybe water drips
 - [ ] Melt a hole in the pipe for the 4 wires going to the shower head
 - [ ] 3D print a cover to put onto the shower head
 - [ ] 3D print a knob for potentiometer
