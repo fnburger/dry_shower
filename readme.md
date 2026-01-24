@@ -14,6 +14,7 @@ WARNING: GPIO PIN 4 ON THE PROVIDED ESP32 IS BROKEN. GPIO PIN 34 IS NOT STABLE E
 - [ ] Choose spots for holder, pot, LED strip
 - [ ] Melt a hole in the pipe for the 4 wires going to the shower head
 - [ ] Melt a hole in the pipe for the 2 wires going to the switch (hide this hole behind the holder)
+- [ ] Melt a hole in the pipe for the potentiometer knob
 - [ ] 3D print a cover to put onto the shower head
 - [ ] 3D print a knob for potentiometer
 - [x] Modify shower head to hold vibration motor and LEDs, fit cables through hose
