@@ -13,18 +13,18 @@ WARNING: GPIO PIN 4 ON THE PROVIDED ESP32 IS BROKEN. GPIO PIN 34 IS NOT STABLE E
 - [x] Get and wire / solder blue LEDs for shower head
 - [ ] Choose spots for holder, pot, LED strip
 - [ ] Melt a hole in the pipe for the 4 wires going to the shower head
-- [ ] 3D print a cover to put onto the shower head
-- [ ] 3D print a knob for potentiometer
+- [ ] Melt a hole in the pipe for the 2 wires going to the switch (hide this hole behind the holder)
+- [ ] Melt a hole in the pipe for the potentiometer knob
+- [x] 3D print a cover to put onto the shower head
+- [x] 3D print a knob for potentiometer
 - [x] Modify shower head to hold vibration motor and LEDs, fit cables through hose
 - [x] Buy spray-color (black) for pipes, box
 - [x] Cut hole for bottom pipe into box (base)
-- [ ] Modify umbrella (remove handle or inverse bend)
+- [x] Modify umbrella (remove handle or inverse bend)
 - [ ] Come up with water values and timespans for showering experience. Should use real data in some way. Communicate this on the poster or a screen.
-- [ ] Melt a hole in the pipe for the 2 wires going to the switch (hide this hole behind the holder)
 - [ ] 3D print, build and glue a holder for the shower head when it's not in use --> needs to hold down the switch and release it when shower head gets picked up
 - [x] Complete breadboard prototype
 - [ ] (Optional) Use smaller second speaker for SFX like country select, empty tank, maybe water drips
-- [ ] Complete housing (pipes, shower head, base, umbrella)
 - [ ] Assemble and test functionality and stability
 - [ ] Draw country indicator for pot onto pipe and indicator on the knob
 - [ ] Create 2 minute demo video (deadline 25th Jan)
