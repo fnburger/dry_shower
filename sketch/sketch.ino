@@ -28,6 +28,8 @@ const int RAIN_AUSTRIA = 65;
 const int RAIN_INDONASIA = 100;
 const float DRAIN_SPEED = 0.005;
 const float TRANSITION_SPEED = 0.1; 
+const float DRAIN_SPEED = 0.005;   // Slow "Rain" refill speed
+const float TRANSITION_SPEED = 0.2; // Fast "Button" animation speed
 
 // --- Variables ---
 float currentWaterLevel = 0;
@@ -63,7 +65,6 @@ void setup() {
   
   df.begin(dfSerial); 
   delay(200);
-
   df.reset();
   delay(1000); 
 
@@ -106,47 +107,43 @@ void loop() {
     for (int i = 0; i < (int)previewLevel; i++) {
        if (i < 3) leds[i] = CRGB::Red; // Keep bottom red
        else leds[i] = CRGB::White;     // Flash the rest WHITE
+       if (i < 3) leds[i] = CRGB::Red; 
+       else leds[i] = CRGB::White; // Flash White
     }
     FastLED.show();
-    
-    // 3. Freeze for 0.5 seconds so the eye can register it
-    delay(500); 
+    delay(400); // Pause briefly so they see the selection
 
-    // 4. NOW Reset to 0 to start the "Filling" animation
+    // 3. FORCE RESET TO 0
+    // This guarantees the "Filling Animation" plays from the bottom,
+    // even if the tank was already full.
     currentWaterLevel = 0; 
-    lastTargetLevel = -1; 
+    lastTargetLevel = -1; // -1 forces the "Fast Transition" logic to trigger
   }
   lastSwitchCountry = nowCountry;
 
 
   // ------------------------------------------
-  // 2. IDLE ANIMATION 
+  // 2. IDLE ANIMATION (Only before first interaction)
   // ------------------------------------------
   if (!hasInteracted) {
-    
     if (currentSound != RAIN) {
        df.loop(1); 
        currentSound = RAIN;
     }
-
     analogWrite(VIBE_PIN, 0);
     analogWrite(SHOWER_LED_PIN, 0);
 
-    // Update Drop Position 
+    // Idle Drip Physics
     if (currentMillis - lastDripMove > DRIP_SPEED) {
       lastDripMove = currentMillis;
       idleDripPos -= 1.0; 
-      if (idleDripPos < 0) {
-        idleDripPos = NUM_LEDS - 1; // Reset to top
-      }
+      if (idleDripPos < 0) idleDripPos = NUM_LEDS - 1;
     }
 
-    // Draw Drop
     FastLED.clear();
     leds[(int)idleDripPos] = CRGB::Cyan; 
     FastLED.show();
-
-    return; // Stop here until button press
+    return; // Stop loop here
   }
 
 
@@ -154,12 +151,11 @@ void loop() {
   // 3. NORMAL OPERATION
   // ------------------------------------------
 
-  // decide country
   int percent = (countryIndex == 0) ? RAIN_IRAN : (countryIndex == 1) ? RAIN_AUSTRIA : RAIN_INDONASIA;
   float targetLevel = (percent * NUM_LEDS) / 100.0;
 
   // ==========================================
-  // WATER LEVEL & MOTOR & AUDIO STATE
+  // WATER LEVEL LOGIC
   // ==========================================
   if (isShowering) {
     dripPosition = -1;
@@ -174,8 +170,8 @@ void loop() {
         df.loop(2); 
         currentSound = SHOWER;
       }
-
     } else {
+      // Empty Tank Behavior
       analogWrite(VIBE_PIN, 0);
       analogWrite(SHOWER_LED_PIN, 0); 
       currentWaterLevel = 0;
@@ -186,30 +182,33 @@ void loop() {
       }
     }
   } else {
+    // IDLE / REFILLING
     analogWrite(VIBE_PIN, 0);
     analogWrite(SHOWER_LED_PIN, 0); 
 
+    // CASE A: Button was just pressed (Fast Animation)
+    // We know this because lastTargetLevel was set to -1
     if ((int)targetLevel != lastTargetLevel) {
       if (currentWaterLevel < targetLevel) {
-        currentWaterLevel += TRANSITION_SPEED;
+        currentWaterLevel += TRANSITION_SPEED; // FAST speed
         if (currentWaterLevel > targetLevel) currentWaterLevel = targetLevel;
-      } else {
-        currentWaterLevel -= TRANSITION_SPEED;
-        if (currentWaterLevel < targetLevel) currentWaterLevel = targetLevel;
-      }
+      } 
+      // (We don't need 'else' here because we reset to 0, so we always climb up)
 
+      // Lock in the level when we get close
       if (abs(currentWaterLevel - targetLevel) < 0.1) {
         currentWaterLevel = targetLevel;
-        lastTargetLevel = (int)targetLevel;
+        lastTargetLevel = (int)targetLevel; // Animation Done
       }
-
       dripPosition = -1; 
       isRefilling = false;
     }
+    // CASE B: Post-Shower Refill (Slow Rain)
+    // This happens when target == lastTarget, but level is low
     else if (currentWaterLevel < targetLevel) {
-      currentWaterLevel += 0.005;
+      currentWaterLevel += 0.005; // SLOW speed
       isRefilling = true;
-      if (dripPosition < 0) dripPosition = NUM_LEDS - 1; // Start refill drip at Top
+      if (dripPosition < 0) dripPosition = NUM_LEDS - 1; 
     } else {
       dripPosition = -1;
       isRefilling = false;
@@ -226,10 +225,10 @@ void loop() {
   // ==========================================
   if (dripPosition >= 0 && currentMillis - lastDripMove > DRIP_SPEED) {
     lastDripMove = currentMillis;
-    dripPosition -= 1.0; // Fall DOWN
+    dripPosition -= 1.0; 
     if (dripPosition <= currentWaterLevel) {
       if (currentWaterLevel < targetLevel) {
-        dripPosition = NUM_LEDS - 1; // Reset to Top
+        dripPosition = NUM_LEDS - 1; 
       } else {
         dripPosition = -1;
       }
@@ -237,7 +236,7 @@ void loop() {
   }
 
   // ==========================================
-  // LED STRIP DISPLAY
+  // DISPLAY
   // ==========================================
   FastLED.clear();
   int ledsToDisplay = (int)currentWaterLevel;
@@ -246,6 +245,7 @@ void loop() {
     else leds[i] = CRGB::Blue;
   }
 
+  // White surface line during Fast Animation
   if ((int)targetLevel != lastTargetLevel && ledsToDisplay > 0 && ledsToDisplay <= NUM_LEDS) {
     leds[ledsToDisplay - 1] = CRGB::White; 
   }
