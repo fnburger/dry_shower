@@ -27,7 +27,7 @@ const int RAIN_IRAN = 30;
 const int RAIN_AUSTRIA = 65;
 const int RAIN_INDONASIA = 100;
 const float DRAIN_SPEED = 0.005;
-const float TRANSITION_SPEED = 0.1;  // Speed for knob turns (Adjust this for snappiness)
+const float TRANSITION_SPEED = 0.1; 
 
 // --- Variables ---
 float currentWaterLevel = 0;
@@ -40,6 +40,10 @@ bool isShowering = false;
 bool lastSwitchShower = HIGH;
 int countryIndex = 0;  // 0: IRAN, 1: AUSTRIA, 2: INDONASIA
 bool lastSwitchCountry = HIGH;
+
+// Idle Animation Variables
+bool hasInteracted = false; 
+float idleDripPos = NUM_LEDS - 1;
 
 // Audio State Tracking
 enum SoundState { SILENT, RAIN, SHOWER, EMPTY };
@@ -74,26 +78,68 @@ void setup() {
 void loop() {
   unsigned long currentMillis = millis();
 
+  // ------------------------------------------
+  // 1. INPUT DETECTION
+  // ------------------------------------------
+  
   // switch shower
   bool nowShower = digitalRead(SWITCH_PIN_SHOWER);
   if (lastSwitchShower == HIGH && nowShower == LOW) {
     isShowering = !isShowering;  // toggle
+    hasInteracted = true;        // User gave input!
   }
   lastSwitchShower = nowShower;
 
   // switch country
   bool nowCountry = digitalRead(SWITCH_PIN_COUNTRY);
   if (!isShowering && lastSwitchCountry == HIGH && nowCountry == LOW) {
-    countryIndex = (countryIndex + 1) % 3;  // 0→1→2→0
+    countryIndex = (countryIndex + 1) % 3;  // 0->1->2->0
+    hasInteracted = true;        // User gave input!
   }
   lastSwitchCountry = nowCountry;
+
+
+  // ------------------------------------------
+  // 2. IDLE ANIMATION (Corrected for Bottom Cable)
+  // ------------------------------------------
+  if (!hasInteracted) {
+    
+    if (currentSound != RAIN) {
+       df.loop(1); 
+       currentSound = RAIN;
+    }
+
+    analogWrite(VIBE_PIN, 0);
+    analogWrite(SHOWER_LED_PIN, 0);
+
+    // Update Drop Position 
+    if (currentMillis - lastDripMove > DRIP_SPEED) {
+      lastDripMove = currentMillis;
+      idleDripPos -= 1.0; 
+      if (idleDripPos < 0) {
+        idleDripPos = NUM_LEDS - 1; // Reset to top
+      }
+    }
+
+    // Draw Drop
+    FastLED.clear();
+    leds[(int)idleDripPos] = CRGB::Cyan; 
+    FastLED.show();
+
+    return; // Stop here until button press
+  }
+
+
+  // ------------------------------------------
+  // 3. NORMAL OPERATION
+  // ------------------------------------------
 
   // decide country
   int percent = (countryIndex == 0) ? RAIN_IRAN : (countryIndex == 1) ? RAIN_AUSTRIA : RAIN_INDONASIA;
   float targetLevel = (percent * NUM_LEDS) / 100.0;
 
   // ==========================================
-  // 1. WATER LEVEL & MOTOR & AUDIO STATE
+  // WATER LEVEL & MOTOR & AUDIO STATE
   // ==========================================
   if (isShowering) {
     dripPosition = -1;
@@ -105,29 +151,25 @@ void loop() {
       analogWrite(SHOWER_LED_PIN, 255); 
 
       if (currentSound != SHOWER) {
-        df.loop(2);  // Play 0002.mp3 (Shower)
+        df.loop(2); 
         currentSound = SHOWER;
       }
 
     } else {
-      // Tank is empty while shower is still held
       analogWrite(VIBE_PIN, 0);
       analogWrite(SHOWER_LED_PIN, 0); 
       currentWaterLevel = 0;
 
       if (currentSound != EMPTY) {
-        df.stop();  // Stop the shower sound when water is empty
+        df.stop(); 
         currentSound = EMPTY;
       }
-      // Removed Warning Sound (df.play(3))
     }
   } else {
     analogWrite(VIBE_PIN, 0);
     analogWrite(SHOWER_LED_PIN, 0); 
 
-    // Handle Country Change (SMOOTH TRANSITION ANIMATION)
     if ((int)targetLevel != lastTargetLevel) {
-
       if (currentWaterLevel < targetLevel) {
         currentWaterLevel += TRANSITION_SPEED;
         if (currentWaterLevel > targetLevel) currentWaterLevel = targetLevel;
@@ -136,44 +178,38 @@ void loop() {
         if (currentWaterLevel < targetLevel) currentWaterLevel = targetLevel;
       }
 
-      // If we are very close to the target, lock it in and update lastTargetLevel
       if (abs(currentWaterLevel - targetLevel) < 0.1) {
         currentWaterLevel = targetLevel;
         lastTargetLevel = (int)targetLevel;
       }
 
-      dripPosition = -1;  // No dripping while the tank is "moving"
+      dripPosition = -1; 
       isRefilling = false;
     }
-    // Handle slow refill
     else if (currentWaterLevel < targetLevel) {
       currentWaterLevel += 0.005;
       isRefilling = true;
-      if (dripPosition < 0) dripPosition = NUM_LEDS - 1;
+      if (dripPosition < 0) dripPosition = NUM_LEDS - 1; // Start refill drip at Top
     } else {
       dripPosition = -1;
       isRefilling = false;
     }
 
-    // Audio Logic for Idle/Rain mode
     if (currentSound != RAIN) {
-      df.loop(1);  // Play 0001.mp3 (Rain)
+      df.loop(1);
       currentSound = RAIN;
     }
   }
 
   // ==========================================
-  // 2. DRIP MOVEMENT
+  // DRIP MOVEMENT
   // ==========================================
   if (dripPosition >= 0 && currentMillis - lastDripMove > DRIP_SPEED) {
     lastDripMove = currentMillis;
-    dripPosition -= 1.0;
+    dripPosition -= 1.0; // Fall DOWN
     if (dripPosition <= currentWaterLevel) {
-      // Impact sound commented
-      // df.play(4);
-
       if (currentWaterLevel < targetLevel) {
-        dripPosition = NUM_LEDS - 1;
+        dripPosition = NUM_LEDS - 1; // Reset to Top
       } else {
         dripPosition = -1;
       }
@@ -181,7 +217,7 @@ void loop() {
   }
 
   // ==========================================
-  // 3. LED STRIP DISPLAY
+  // LED STRIP DISPLAY
   // ==========================================
   FastLED.clear();
   int ledsToDisplay = (int)currentWaterLevel;
@@ -190,9 +226,8 @@ void loop() {
     else leds[i] = CRGB::Blue;
   }
 
-  // Visual "Surface" effect during country changes
   if ((int)targetLevel != lastTargetLevel && ledsToDisplay > 0 && ledsToDisplay <= NUM_LEDS) {
-    leds[ledsToDisplay - 1] = CRGB::White;  // Bright surface line
+    leds[ledsToDisplay - 1] = CRGB::White; 
   }
 
   if (dripPosition >= 0) leds[(int)dripPosition] = CRGB::Cyan;
@@ -200,5 +235,4 @@ void loop() {
     if ((currentMillis / 250) % 2 == 0) fill_solid(leds, 3, CRGB::Red);
   }
   FastLED.show(); 
-
 }
