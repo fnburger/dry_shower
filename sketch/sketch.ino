@@ -85,8 +85,8 @@ void loop() {
   // switch shower
   bool nowShower = digitalRead(SWITCH_PIN_SHOWER);
   if (lastSwitchShower == HIGH && nowShower == LOW) {
-    isShowering = !isShowering;  // toggle
-    hasInteracted = true;        // User gave input!
+    isShowering = !isShowering;  
+    hasInteracted = true;        
   }
   lastSwitchShower = nowShower;
 
@@ -94,13 +94,33 @@ void loop() {
   bool nowCountry = digitalRead(SWITCH_PIN_COUNTRY);
   if (!isShowering && lastSwitchCountry == HIGH && nowCountry == LOW) {
     countryIndex = (countryIndex + 1) % 3;  // 0->1->2->0
-    hasInteracted = true;        // User gave input!
+    hasInteracted = true;        
+
+    // --- PREVIEW FLASH ---
+    // 1. Calculate the NEW target immediately just for the preview
+    int p = (countryIndex == 0) ? RAIN_IRAN : (countryIndex == 1) ? RAIN_AUSTRIA : RAIN_INDONASIA;
+    float previewLevel = (p * NUM_LEDS) / 100.0;
+
+    // 2. Flash this level in WHITE so user sees what they picked
+    FastLED.clear();
+    for (int i = 0; i < (int)previewLevel; i++) {
+       if (i < 3) leds[i] = CRGB::Red; // Keep bottom red
+       else leds[i] = CRGB::White;     // Flash the rest WHITE
+    }
+    FastLED.show();
+    
+    // 3. Freeze for 0.5 seconds so the eye can register it
+    delay(500); 
+
+    // 4. NOW Reset to 0 to start the "Filling" animation
+    currentWaterLevel = 0; 
+    lastTargetLevel = -1; 
   }
   lastSwitchCountry = nowCountry;
 
 
   // ------------------------------------------
-  // 2. IDLE ANIMATION (Corrected for Bottom Cable)
+  // 2. IDLE ANIMATION 
   // ------------------------------------------
   if (!hasInteracted) {
     
