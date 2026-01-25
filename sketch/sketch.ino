@@ -25,7 +25,7 @@ const int RAIN_IRAN = 30;
 const int RAIN_AUSTRIA = 65; 
 const int RAIN_TAIWAN = 100; 
 const float DRAIN_SPEED = 0.005;
-const float TRANSITION_SPEED = 0.5; // High speed for knob turns (Adjust this for snappiness)
+const float TRANSITION_SPEED = 0.5; // High speed for knob turns
 
 // --- Variables ---
 float currentWaterLevel = 0; 
@@ -39,6 +39,12 @@ enum SoundState { SILENT, RAIN, SHOWER, EMPTY };
 SoundState currentSound = SILENT;
 bool isRefilling = false; 
 
+// --- DEBOUNCE VARIABLES ---
+bool stableSwitchState = HIGH;   // The "official" debounced state
+bool lastRawReading = HIGH;      // The previous raw reading
+unsigned long lastDebounceTime = 0;  
+const unsigned long DEBOUNCE_DELAY = 50; // Wait 50ms before accepting a change
+
 void setup() {
   Serial.begin(115200);
   FastLED.addLeds<WS2801, DATA_PIN, CLOCK_PIN, RGB>(leds, NUM_LEDS);
@@ -47,7 +53,7 @@ void setup() {
   FastLED.show();
 
   // DFPlayer Init
-  delay(5000); 
+  delay(2000); 
   dfSerial.begin(9600, SERIAL_8N1, RX_PIN, TX_PIN);
   if (!df.begin(dfSerial)) {
     Serial.println("DFPlayer FAILED.");
@@ -63,8 +69,28 @@ void setup() {
 
 void loop() {
   unsigned long currentMillis = millis();
-  bool isShowering = (digitalRead(SWITCH_PIN) == LOW);
 
+  // ==========================================
+  // 1. SIGNAL DEBOUNCING
+  // ==========================================
+  bool rawReading = digitalRead(SWITCH_PIN);
+
+  if (rawReading != lastRawReading) {
+    lastDebounceTime = currentMillis;
+  }
+
+  if ((currentMillis - lastDebounceTime) > DEBOUNCE_DELAY) {
+    if (rawReading != stableSwitchState) {
+      stableSwitchState = rawReading;
+    }
+  }
+  
+  lastRawReading = rawReading;
+  bool isShowering = (stableSwitchState == LOW);
+
+  // ==========================================
+  // 2. MAIN LOGIC
+  // ==========================================
   long potSum = 0;
   for (int i = 0; i < 10; i++) potSum += analogRead(POT_PIN);
   int potValue = potSum / 10;
@@ -72,9 +98,6 @@ void loop() {
   int percent = (potValue < 1365) ? RAIN_IRAN : (potValue < 2730) ? RAIN_AUSTRIA : RAIN_TAIWAN;
   float targetLevel = (percent * NUM_LEDS) / 100.0;
 
-  // ==========================================
-  // 1. WATER LEVEL & MOTOR & AUDIO STATE
-  // ==========================================
   if (isShowering) {
     dripPosition = -1; 
     isRefilling = false;
@@ -93,18 +116,16 @@ void loop() {
       currentWaterLevel = 0;
       
       if (currentSound != EMPTY) {
-        df.stop();  // Stop the shower sound when water is empty
+        df.stop();  
         currentSound = EMPTY;
       }
-      // Removed Warning Sound (df.play(3))
     }
   } 
   else {
     analogWrite(VIBE_PIN, 0); 
 
-    // Handle Country Change (SMOOTH TRANSITION ANIMATION)
+    // Handle Country Change
     if ((int)targetLevel != lastTargetLevel) {
-      
       if (currentWaterLevel < targetLevel) {
         currentWaterLevel += TRANSITION_SPEED;
         if (currentWaterLevel > targetLevel) currentWaterLevel = targetLevel;
@@ -113,13 +134,11 @@ void loop() {
         if (currentWaterLevel < targetLevel) currentWaterLevel = targetLevel;
       }
 
-      // If we are very close to the target, lock it in and update lastTargetLevel
       if (abs(currentWaterLevel - targetLevel) < 0.1) {
           currentWaterLevel = targetLevel;
           lastTargetLevel = (int)targetLevel;
       }
-      
-      dripPosition = -1; // No dripping while the tank is "moving"
+      dripPosition = -1; 
       isRefilling = false;
     } 
     // Handle slow refill
@@ -147,7 +166,7 @@ void loop() {
     lastDripMove = currentMillis;
     dripPosition -= 1.0; 
     if (dripPosition <= currentWaterLevel) {
-      // Impact sound commented
+      // Impact sound commented out
       // df.play(4); 
       
       if (currentWaterLevel < targetLevel) {
@@ -159,7 +178,7 @@ void loop() {
   }
 
   // ==========================================
-  // 3. LED STRIP DISPLAY
+  // 4. LED STRIP DISPLAY
   // ==========================================
   FastLED.clear();
   int ledsToDisplay = (int)currentWaterLevel;
@@ -168,9 +187,9 @@ void loop() {
     else leds[i] = CRGB::Blue;
   }
 
-  // Visual "Surface" effect during country changes
+  // Visual "Surface" effect
   if ((int)targetLevel != lastTargetLevel && ledsToDisplay > 0 && ledsToDisplay <= NUM_LEDS) {
-      leds[ledsToDisplay - 1] = CRGB::White; // Bright surface line
+      leds[ledsToDisplay - 1] = CRGB::White; 
   }
 
   if (dripPosition >= 0) leds[(int)dripPosition] = CRGB::Cyan;
