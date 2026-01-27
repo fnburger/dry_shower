@@ -41,9 +41,14 @@ bool lastSwitchShower = HIGH;
 int countryIndex = 0;  // 0: IRAN, 1: AUSTRIA, 2: INDONASIA
 bool lastSwitchCountry = HIGH;
 
+
 // Idle Animation Variables
 bool hasInteracted = false; 
 float idleDripPos = NUM_LEDS - 1;
+unsigned long lastInteraction = 0;
+const unsigned long IDLE_BUTTONS = 15000; 
+const unsigned long IDLE_EMPTY = 3000;
+
 
 // Audio State Tracking
 enum SoundState { SILENT, RAIN, SHOWER, EMPTY };
@@ -73,6 +78,7 @@ void setup() {
   pinMode(SHOWER_LED_PIN, OUTPUT);
   pinMode(SWITCH_PIN_SHOWER, INPUT_PULLUP);
   pinMode(SWITCH_PIN_COUNTRY, INPUT_PULLUP);
+  lastInteraction = millis(); // 追加
 }
 
 void loop() {
@@ -87,6 +93,7 @@ void loop() {
   if (lastSwitchShower == HIGH && nowShower == LOW) {
     isShowering = !isShowering;  // toggle
     hasInteracted = true;        // User gave input!
+    lastInteraction = currentMillis;   // 追加
   }
   lastSwitchShower = nowShower;
 
@@ -95,9 +102,19 @@ void loop() {
   if (!isShowering && lastSwitchCountry == HIGH && nowCountry == LOW) {
     countryIndex = (countryIndex + 1) % 3;  // 0->1->2->0
     hasInteracted = true;        // User gave input!
+    lastInteraction = currentMillis;   // 追加
   }
   lastSwitchCountry = nowCountry;
 
+  // --- 追加：無操作でアイドル復帰 ---
+  if (hasInteracted && (currentMillis - lastInteraction > IDLE_BUTTONS)) {
+    hasInteracted = false;
+    idleDripPos = NUM_LEDS - 1;
+    dripPosition = -1;
+
+    currentSound = SILENT;
+    df.stop();
+  }
 
   // ------------------------------------------
   // 2. IDLE ANIMATION (Corrected for Bottom Cable)
@@ -163,6 +180,8 @@ void loop() {
       if (currentSound != EMPTY) {
         df.stop(); 
         currentSound = EMPTY;
+        lastInteraction = currentMillis - (IDLE_BUTTONS - IDLE_EMPTY);
+
       }
     }
   } else {
