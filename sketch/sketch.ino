@@ -14,7 +14,7 @@
 #define NUM_LEDS 41
 #define BRIGHTNESS 120
 
-// DFPlayer uses UART2: RX (GPIO 16), TX (GPIO 17) is standard for ESP32 UART2
+// DFPlayer uses UART2: RX (GPIO 16), TX (GPIO 17)
 #define RX_PIN 16
 #define TX_PIN 17
 
@@ -26,34 +26,34 @@ CRGB leds[NUM_LEDS];
 const int RAIN_IRAN = 30;
 const int RAIN_AUSTRIA = 65;
 const int RAIN_INDONASIA = 100;
-const float DRAIN_SPEED = 0.005;
-const float TRANSITION_SPEED = 0.1; 
+
+// Speeds
+const float DRAIN_SPEED = 0.005;      // Speed when showering
+const float FILL_SPEED = 0.01;       // Approx 15 seconds to fill full
+const int DRIP_SPEED = 20;           // Faster falling drops for rain effect
 
 // --- Variables ---
 float currentWaterLevel = 0;
-int lastTargetLevel = 0;
-float dripPosition = -1;
+float fillDripPos = -1;              // Position of the drop falling during fill
 unsigned long lastDripMove = 0;
-const int DRIP_SPEED = 30;
 
 bool isShowering = false;
 bool lastSwitchShower = HIGH;
-int countryIndex = 0;  // 0: IRAN, 1: AUSTRIA, 2: INDONASIA
+int countryIndex = 0; 
 bool lastSwitchCountry = HIGH;
 
+// State Logic
+bool hasInteracted = false;          
+unsigned long lastInputTime = 0;     
+bool collectionStarted = false;      
+float idleDripPos = NUM_LEDS - 1;    
 
-// Idle Animation Variables
-bool hasInteracted = false; 
-float idleDripPos = NUM_LEDS - 1;
-unsigned long lastInteraction = 0;
-const unsigned long IDLE_BUTTONS = 15000; 
-const unsigned long IDLE_EMPTY = 3000;
-
+// NEW: Empty State Timer
+unsigned long emptyTimerStart = 0;   
 
 // Audio State Tracking
 enum SoundState { SILENT, RAIN, SHOWER, EMPTY };
 SoundState currentSound = SILENT;
-bool isRefilling = false;
 
 void setup() {
   Serial.begin(115200);
@@ -63,22 +63,20 @@ void setup() {
   FastLED.show();
 
   // DFPlayer Init
-  delay(5000);
+  delay(3000);
   dfSerial.begin(9600, SERIAL_8N1, RX_PIN, TX_PIN);
   
-  df.begin(dfSerial); 
-  delay(200);
-
-  df.reset();
-  delay(1000); 
-
-  df.volume(30);
+  if(df.begin(dfSerial)) {
+    delay(200);
+    df.reset();
+    delay(1000); 
+    df.volume(30);
+  }
 
   pinMode(VIBE_PIN, OUTPUT);
   pinMode(SHOWER_LED_PIN, OUTPUT);
   pinMode(SWITCH_PIN_SHOWER, INPUT_PULLUP);
   pinMode(SWITCH_PIN_COUNTRY, INPUT_PULLUP);
-  lastInteraction = millis(); // 追加
 }
 
 void loop() {
@@ -88,170 +86,172 @@ void loop() {
   // 1. INPUT DETECTION
   // ------------------------------------------
   
-  // switch shower
+  // -- SHOWER SWITCH --
   bool nowShower = digitalRead(SWITCH_PIN_SHOWER);
   if (lastSwitchShower == HIGH && nowShower == LOW) {
-    isShowering = !isShowering;  // toggle
-    hasInteracted = true;        // User gave input!
-    lastInteraction = currentMillis;   // 追加
+    if (currentWaterLevel > 0 || isShowering) {
+      isShowering = !isShowering;  
+    }
+    hasInteracted = true;        
+    lastInputTime = currentMillis; 
+    emptyTimerStart = 0; // Cancel empty timer if user presses button
   }
   lastSwitchShower = nowShower;
 
-  // switch country
+  // -- COUNTRY SWITCH --
   bool nowCountry = digitalRead(SWITCH_PIN_COUNTRY);
   if (!isShowering && lastSwitchCountry == HIGH && nowCountry == LOW) {
-    countryIndex = (countryIndex + 1) % 3;  // 0->1->2->0
-    hasInteracted = true;        // User gave input!
-    lastInteraction = currentMillis;   // 追加
+    countryIndex = (countryIndex + 1) % 3; 
+    
+    // Reset Logic
+    hasInteracted = true;        
+    lastInputTime = currentMillis;  
+    collectionStarted = false;      
+    currentWaterLevel = 0;          
+    fillDripPos = NUM_LEDS - 1;     
+    emptyTimerStart = 0; // Cancel empty timer if user presses button
   }
   lastSwitchCountry = nowCountry;
 
-  // --- 追加：無操作でアイドル復帰 ---
-  if (hasInteracted && (currentMillis - lastInteraction > IDLE_BUTTONS)) {
-    hasInteracted = false;
-    idleDripPos = NUM_LEDS - 1;
-    dripPosition = -1;
-
-    currentSound = SILENT;
-    df.stop();
-  }
 
   // ------------------------------------------
-  // 2. IDLE ANIMATION (Corrected for Bottom Cable)
+  // 2. ATTRACT MODE (Idle State)
   // ------------------------------------------
   if (!hasInteracted) {
-    
-    if (currentSound != RAIN) {
-       df.loop(1); 
-       currentSound = RAIN;
-    }
-
+    if (currentSound != RAIN) { df.loop(1); currentSound = RAIN; }
     analogWrite(VIBE_PIN, 0);
     analogWrite(SHOWER_LED_PIN, 0);
 
-    // Update Drop Position 
+    // Falling Drop Animation
     if (currentMillis - lastDripMove > DRIP_SPEED) {
       lastDripMove = currentMillis;
       idleDripPos -= 1.0; 
-      if (idleDripPos < 0) {
-        idleDripPos = NUM_LEDS - 1; // Reset to top
-      }
+      if (idleDripPos < 0) idleDripPos = NUM_LEDS - 1;
     }
 
-    // Draw Drop
     FastLED.clear();
     leds[(int)idleDripPos] = CRGB::Cyan; 
     FastLED.show();
-
-    return; // Stop here until button press
+    return; // STOP LOOP HERE
   }
 
 
   // ------------------------------------------
-  // 3. NORMAL OPERATION
+  // 3. MAIN LOGIC
   // ------------------------------------------
 
-  // decide country
   int percent = (countryIndex == 0) ? RAIN_IRAN : (countryIndex == 1) ? RAIN_AUSTRIA : RAIN_INDONASIA;
   float targetLevel = (percent * NUM_LEDS) / 100.0;
 
-  // ==========================================
-  // WATER LEVEL & MOTOR & AUDIO STATE
-  // ==========================================
+  // --- A. SHOWERING BEHAVIOR ---
   if (isShowering) {
-    dripPosition = -1;
-    isRefilling = false;
-
+    fillDripPos = -1; // Stop raining
+    
     if (currentWaterLevel > 0) {
       currentWaterLevel -= DRAIN_SPEED;
       analogWrite(VIBE_PIN, 200);
       analogWrite(SHOWER_LED_PIN, 255); 
-
-      if (currentSound != SHOWER) {
-        df.loop(2); 
-        currentSound = SHOWER;
-      }
-
+      if (currentSound != SHOWER) { df.loop(2); currentSound = SHOWER; }
     } else {
+      // === TANK IS EMPTY ===
       analogWrite(VIBE_PIN, 0);
       analogWrite(SHOWER_LED_PIN, 0); 
       currentWaterLevel = 0;
-
-      if (currentSound != EMPTY) {
-        df.stop(); 
-        currentSound = EMPTY;
-        lastInteraction = currentMillis - (IDLE_BUTTONS - IDLE_EMPTY);
-
-      }
+      isShowering = false; 
+      
+      // Start the 10-second Empty Timer
+      emptyTimerStart = currentMillis; 
+      
+      if (currentSound != EMPTY) { df.stop(); currentSound = EMPTY; }
     }
-  } else {
+  } 
+  // --- B. EMPTY STATE (10s Delay) ---
+  else if (emptyTimerStart > 0) {
+      // We are in the 10s delay period.
+      // Do nothing logic-wise, just wait.
+      // If 10s passes, go to Idle.
+      if (currentMillis - emptyTimerStart > 10000) {
+          hasInteracted = false;    // Go to Idle Mode
+          emptyTimerStart = 0;      // Reset timer
+          collectionStarted = false; 
+      }
+      // Note: Red blink is handled in Rendering section
+  }
+  // --- C. NORMAL FILLING BEHAVIOR ---
+  else {
     analogWrite(VIBE_PIN, 0);
     analogWrite(SHOWER_LED_PIN, 0); 
 
-    if ((int)targetLevel != lastTargetLevel) {
+    // CHECK 5-SECOND TIMER
+    if (!collectionStarted) {
+      if (currentMillis - lastInputTime > 5000) {
+        collectionStarted = true; 
+        fillDripPos = NUM_LEDS - 1; // Start the rain from top
+      }
+    }
+
+    // FILL & RAIN ANIMATION
+    if (collectionStarted) {
       if (currentWaterLevel < targetLevel) {
-        currentWaterLevel += TRANSITION_SPEED;
+        currentWaterLevel += FILL_SPEED; 
         if (currentWaterLevel > targetLevel) currentWaterLevel = targetLevel;
-      } else {
-        currentWaterLevel -= TRANSITION_SPEED;
-        if (currentWaterLevel < targetLevel) currentWaterLevel = targetLevel;
       }
 
-      if (abs(currentWaterLevel - targetLevel) < 0.1) {
-        currentWaterLevel = targetLevel;
-        lastTargetLevel = (int)targetLevel;
-      }
-
-      dripPosition = -1; 
-      isRefilling = false;
-    }
-    else if (currentWaterLevel < targetLevel) {
-      currentWaterLevel += 0.005;
-      isRefilling = true;
-      if (dripPosition < 0) dripPosition = NUM_LEDS - 1; // Start refill drip at Top
-    } else {
-      dripPosition = -1;
-      isRefilling = false;
-    }
-
-    if (currentSound != RAIN) {
-      df.loop(1);
-      currentSound = RAIN;
-    }
-  }
-
-  // ==========================================
-  // DRIP MOVEMENT
-  // ==========================================
-  if (dripPosition >= 0 && currentMillis - lastDripMove > DRIP_SPEED) {
-    lastDripMove = currentMillis;
-    dripPosition -= 1.0; // Fall DOWN
-    if (dripPosition <= currentWaterLevel) {
+      // Rain Physics
       if (currentWaterLevel < targetLevel) {
-        dripPosition = NUM_LEDS - 1; // Reset to Top
+         if (currentMillis - lastDripMove > DRIP_SPEED) {
+            lastDripMove = currentMillis;
+            fillDripPos -= 1.0; 
+            if (fillDripPos <= currentWaterLevel) fillDripPos = NUM_LEDS - 1; 
+         }
       } else {
-        dripPosition = -1;
+         fillDripPos = -1; 
       }
+
+    } else {
+      currentWaterLevel = 0;
+      fillDripPos = -1;
     }
+
+    if (currentSound != RAIN) { df.loop(1); currentSound = RAIN; }
   }
 
-  // ==========================================
-  // LED STRIP DISPLAY
-  // ==========================================
+
+  // ------------------------------------------
+  // 4. LED RENDERING
+  // ------------------------------------------
   FastLED.clear();
+
   int ledsToDisplay = (int)currentWaterLevel;
+
+  // Draw Water (Blue/Red)
   for (int i = 0; i < ledsToDisplay; i++) {
     if (i < 3) leds[i] = CRGB::Red;
     else leds[i] = CRGB::Blue;
   }
 
-  if ((int)targetLevel != lastTargetLevel && ledsToDisplay > 0 && ledsToDisplay <= NUM_LEDS) {
-    leds[ledsToDisplay - 1] = CRGB::White; 
+  // Draw "Selection Marker" (Only during Selection Phase)
+  if (!collectionStarted && !isShowering && emptyTimerStart == 0) {
+    int targetIndex = (int)targetLevel - 1;
+    if(targetIndex >= 0 && targetIndex < NUM_LEDS) {
+      leds[targetIndex] = CRGB::White; 
+    }
   }
 
-  if (dripPosition >= 0) leds[(int)dripPosition] = CRGB::Cyan;
-  if (isShowering && ledsToDisplay == 0) {
+  // Draw White Surface Line
+  if (collectionStarted && currentWaterLevel < targetLevel && ledsToDisplay > 0) {
+     leds[ledsToDisplay - 1] = CRGB::White;
+  }
+
+  // Draw Rain Drop
+  if (fillDripPos >= 0) {
+     leds[(int)fillDripPos] = CRGB::Cyan;
+  }
+
+  // BLINK RED: When Showering empty OR during the 10s Empty Delay
+  if ((isShowering && ledsToDisplay == 0) || emptyTimerStart > 0) {
     if ((currentMillis / 250) % 2 == 0) fill_solid(leds, 3, CRGB::Red);
   }
+
   FastLED.show(); 
 }
