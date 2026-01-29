@@ -25,14 +25,16 @@ WARNING: GPIO PIN 4 ON THE PROVIDED ESP32 IS BROKEN. GPIO PIN 34 IS NOT STABLE E
 - [ ] 3D print, build and glue a holder for the shower head when it's not in use --> needs to hold down the switch and release it when shower head gets picked up
 - [x] Complete breadboard prototype
 - [ ] (Optional) Use smaller second speaker for SFX like country select, empty tank, maybe water drips
-- [ ] Assemble and test functionality and stability
+- [x] Assemble and test functionality and stability
 - [ ] Draw country indicator for pot onto pipe and indicator on the knob
-- [ ] Create 2 minute demo video (deadline 25th Jan)
-- [ ] Create 1 A4 page scenario (deadline 25th Jan)
-- [ ] Poster for presentation on 28th Jan
+- [x] Create 2 minute demo video (deadline 25th Jan)
+- [x] Create 1 A4 page scenario (deadline 25th Jan)
+- [x] Poster for presentation on 28th Jan
 
-![Dry Shower Prototype](/img/LED_strip.jpeg)
-![Power For LED Strip](/img/wiring.jpeg)
+![Dry Shower Prototype](/img/poster.jpeg)
+![Power For LED Strip](/img/artifact.jpeg)
+![Power For LED Strip](/img/engineering_award.jpeg)
+![Power For LED Strip](/img/artifact_award.jpeg)
 
 # Overview
 The Dry Shower Project is an interactive exhibition device built with an ESP32 microcontroller that simulates a "dry shower" experience. It uses vibration, lights and sound to mimic the sensation of showering with limited water, inspired by varying rainfall levels in different countries. The device features a potentiometer for mode selection, a toggle switch to activate the shower mode, a vibration motor for tactile feedback, an LED strip to simulate the current remaining water level, LEDs on the shower head to visualize water coming out, and a speaker for ambient sounds.
