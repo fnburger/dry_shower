@@ -1,3 +1,33 @@
+![Dry Shower Prototype](/img/poster.jpeg)
+![Power For LED Strip](/img/artifact.jpeg)
+![Power For LED Strip](/img/engineering_award.jpeg)
+![Power For LED Strip](/img/artifact_award.jpeg)
+
+# Overview
+The Dry Shower Project is an interactive exhibition device built with an ESP32 microcontroller that simulates a "dry shower" experience. It uses vibration, lights and sound to mimic the sensation of showering with limited water, inspired by varying rainfall levels in different countries. The device features a potentiometer for mode selection, a toggle switch to activate the shower mode, a vibration motor for tactile feedback, an LED strip to simulate the current remaining water level, LEDs on the shower head to visualize water coming out, and a speaker for ambient sounds.
+
+# Features
+- Mode Selection: Use a potentiometer to choose between three rainfall-inspired modes ()
+- LED Strip (works)
+- LED on the shower head (needs to be assembled and tested)
+- Toggle Switch Control: Switch (springs back to neutral) activates the vibration motor only in the UP position (works)
+- Vibration Feedback: Pulsing motor simulates water flow when active (works)
+- Ambient Sounds:
+    - Rain sounds when idle.
+    - Shower sounds when active.
+    - (REMOVED) Dripping water sound when refilling tank.
+    - (REMOVED) Warning sound when water tank is empty.
+
+# Wiring
+ESP32 Pinout:
+- Potentiometer: Wiper to GPIO32, one end to 3.3V, other to GND
+- Toggle Switch: One terminal to GPIO13, other to GND (internal pull-up enabled)
+- Vibration Motor: To GPIO2 via transistor
+- Speaker: To GPIO16 and GPIO17 (and GND), external 5V power supply
+- LED Strip: DI to GPIO 27, CI to GPIO 14, external 5V and GND (connect external GND to ESP32 GND as well)
+- LED (Shower head): tbd
+
+
 WARNING: GPIO PIN 4 ON THE PROVIDED ESP32 IS BROKEN. GPIO PIN 34 IS NOT STABLE ENOUGH FOR POTENTIOMETER
 # TODO List (please edit)
 - [x] Write basic code and start breadboard prototype
@@ -30,32 +60,3 @@ WARNING: GPIO PIN 4 ON THE PROVIDED ESP32 IS BROKEN. GPIO PIN 34 IS NOT STABLE E
 - [x] Create 2 minute demo video (deadline 25th Jan)
 - [x] Create 1 A4 page scenario (deadline 25th Jan)
 - [x] Poster for presentation on 28th Jan
-
-![Dry Shower Prototype](/img/poster.jpeg)
-![Power For LED Strip](/img/artifact.jpeg)
-![Power For LED Strip](/img/engineering_award.jpeg)
-![Power For LED Strip](/img/artifact_award.jpeg)
-
-# Overview
-The Dry Shower Project is an interactive exhibition device built with an ESP32 microcontroller that simulates a "dry shower" experience. It uses vibration, lights and sound to mimic the sensation of showering with limited water, inspired by varying rainfall levels in different countries. The device features a potentiometer for mode selection, a toggle switch to activate the shower mode, a vibration motor for tactile feedback, an LED strip to simulate the current remaining water level, LEDs on the shower head to visualize water coming out, and a speaker for ambient sounds.
-
-# Features
-- Mode Selection: Use a potentiometer to choose between three rainfall-inspired modes ()
-- LED Strip (works)
-- LED on the shower head (needs to be assembled and tested)
-- Toggle Switch Control: Switch (springs back to neutral) activates the vibration motor only in the UP position (works)
-- Vibration Feedback: Pulsing motor simulates water flow when active (works)
-- Ambient Sounds:
-    - Rain sounds when idle.
-    - Shower sounds when active.
-    - (REMOVED) Dripping water sound when refilling tank.
-    - (REMOVED) Warning sound when water tank is empty.
-
-# Wiring
-ESP32 Pinout:
-- Potentiometer: Wiper to GPIO32, one end to 3.3V, other to GND
-- Toggle Switch: One terminal to GPIO13, other to GND (internal pull-up enabled)
-- Vibration Motor: To GPIO2 via transistor
-- Speaker: To GPIO16 and GPIO17 (and GND), external 5V power supply
-- LED Strip: DI to GPIO 27, CI to GPIO 14, external 5V and GND (connect external GND to ESP32 GND as well)
-- LED (Shower head): tbd
