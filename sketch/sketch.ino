@@ -23,8 +23,8 @@ DFRobotDFPlayerMini df;
 CRGB leds[NUM_LEDS];
 
 // --- Settings ---
-const int RAIN_IRAN = 30;
-const int RAIN_AUSTRIA = 65;
+const int RAIN_IRAN = 10;
+const int RAIN_AUSTRIA = 46;
 const int RAIN_INDONASIA = 100;
 
 // Speeds
